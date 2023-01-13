@@ -413,8 +413,8 @@ export class Hocuspocus {
       // There’s no need to queue messages anymore.
       incoming.off('message', listener)
       // Let’s work through queued messages.
+      console.log('emitting queue: ', incomingMessageQueue)
       incomingMessageQueue.forEach(input => {
-        console.log('emitting queue')
         incoming.emit('message', input)
       })
 
@@ -502,6 +502,7 @@ export class Hocuspocus {
             })
         } else if (!connection.requiresAuthentication) {
           console.log('queueIncomingMessageListener: auth not required, setUpNewConnection')
+          incomingMessageQueue.push(data)
 
           return setUpNewConnection(hookPayload.documentName, queueIncomingMessageListener)
         } else {
@@ -522,7 +523,7 @@ export class Hocuspocus {
     }
 
     const messageHandler = (data: Uint8Array) => {
-
+      // const data = new Uint8Array(x)
       console.log('got message', data)
 
       console.log('messageHandler')
@@ -549,6 +550,7 @@ export class Hocuspocus {
       hookPayload.documentName = documentName
 
       incoming.on('message', queueIncomingMessageListener)
+      queueIncomingMessageListener(data)
 
       this.hooks('onConnect', hookPayload, (contextAdditions: any) => {
         // merge context from all hooks
