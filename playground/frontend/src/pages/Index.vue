@@ -44,7 +44,11 @@
 import { Editor, EditorContent } from '@tiptap/vue-2'
 import StarterKit from '@tiptap/starter-kit'
 import Collaboration from '@tiptap/extension-collaboration'
-import { HocuspocusProvider, HocuspocusCloudProvider } from '@hocuspocus/provider'
+import {
+  HocuspocusProvider,
+  HocuspocusCloudProvider,
+  HocuspocusProviderWebsocket,
+} from '@hocuspocus/provider'
 
 export default {
   components: {
@@ -66,23 +70,21 @@ export default {
     //   name: 'hocuspocus-demo',
     // })
 
-    this.provider = new HocuspocusProvider({
+    const socket = new HocuspocusProviderWebsocket({
       url: 'ws://127.0.0.1:1234',
-      name: 'hocuspocus-demo',
-      broadcast: false,
-      onAwarenessChange: ({ states }) => {
-        console.log('provider', states)
-      },
     })
 
-    // this.anotherProvider = new HocuspocusProvider({
-    //   url: 'ws://127.0.0.1:1234',
-    //   name: 'hocuspocus-demo',
-    //   broadcast: false,
-    //   onAwarenessChange: ({ states }) => {
-    //     console.log('anotherProvider', states)
-    //   },
-    // })
+    this.provider = new HocuspocusProvider({
+      websocketProvider: socket,
+      name: 'hocuspocus-demo',
+      broadcast: false,
+    })
+
+    this.anotherProvider = new HocuspocusProvider({
+      websocketProvider: socket,
+      name: 'hocuspocus-demo2',
+      broadcast: false,
+    })
 
     this.editor = new Editor({
       extensions: [
@@ -96,24 +98,24 @@ export default {
       ],
     })
 
-    // this.anotherEditor = new Editor({
-    //   extensions: [
-    //     StarterKit.configure({
-    //       history: false,
-    //     }),
-    //     Collaboration.configure({
-    //       document: this.anotherProvider.document,
-    //       field: 'default',
-    //     }),
-    //   ],
-    // })
+    this.anotherEditor = new Editor({
+      extensions: [
+        StarterKit.configure({
+          history: false,
+        }),
+        Collaboration.configure({
+          document: this.anotherProvider.document,
+          field: 'default',
+        }),
+      ],
+    })
   },
 
   beforeDestroy() {
     this.editor.destroy()
     this.anotherEditor.destroy()
     this.provider.destroy()
-    // this.anotherProvider.destroy()
+    this.anotherProvider.destroy()
   },
 }
 </script>

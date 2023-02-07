@@ -290,7 +290,7 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
       ws.binaryType = 'arraybuffer'
       ws.onmessage = (payload: any) => this.emit('message', payload)
       ws.onclose = (payload: any) => this.emit('close', payload)
-      ws.onopen = (payload: any) => this.emit('connect', payload)
+      ws.onopen = (payload: any) => this.emit('open', payload)
       ws.onerror = (err: any) => {
         reject(err)
       }
@@ -411,21 +411,14 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     return this.configuration.token
   }
 
-  send(message: ConstructableOutgoingMessage, args: any, broadcast = false) {
+  send(message: any) {
     if (this.webSocket?.readyState === WsReadyStates.Open) {
-      console.log('Sending message from provider!')
-      console.log(message)
-      console.log(args)
-      const messageSender = new MessageSender(message, args)
-
-      this.emit('outgoingMessage', { message: messageSender.message })
-      messageSender.send(this.webSocket)
+      console.log('Sending message from websocket provider!')
+      this.webSocket.send(message)
     }
   }
 
   onClose(event: CloseEvent) {
-    this.emit('close', { event })
-
     this.webSocket = null
     this.isAuthenticated = false
 

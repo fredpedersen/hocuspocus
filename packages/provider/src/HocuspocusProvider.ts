@@ -20,9 +20,10 @@ import {
   ConstructableOutgoingMessage, onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, onSyncedParameters, WebSocketStatus,
 } from './types'
 import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
+import { HocuspocusProviderWebsocket } from './HocuspocusProviderWebsocket'
 
 export type HocuspocusProviderConfiguration =
-  Required<Pick<CompleteHocuspocusProviderConfiguration, 'name'>>
+  Required<Pick<CompleteHocuspocusProviderConfiguration, 'name' | 'websocketProvider'>>
   & Partial<CompleteHocuspocusProviderConfiguration>
 
 export interface CompleteHocuspocusProviderConfiguration {
@@ -52,9 +53,9 @@ export interface CompleteHocuspocusProviderConfiguration {
    */
   parameters: { [key: string]: any },
   /**
-   * An optional WebSocket polyfill, for example for Node.js
+   * Hocuspocus websocket provider
    */
-  WebSocketPolyfill: any,
+  websocketProvider: HocuspocusProviderWebsocket,
   /**
    * Force syncing the document in the defined interval.
    */
@@ -86,7 +87,6 @@ export class HocuspocusProvider extends EventEmitter {
     document: undefined,
     // @ts-ignore
     awareness: undefined,
-    WebSocketPolyfill: undefined,
     token: null,
     parameters: {},
     broadcast: true,
@@ -109,8 +109,6 @@ export class HocuspocusProvider extends EventEmitter {
 
   subscribedToBroadcastChannel = false
 
-  webSocket: WebSocket | null = null
-
   isSynced = false
 
   unsyncedChanges = 0
@@ -129,21 +127,18 @@ export class HocuspocusProvider extends EventEmitter {
 
     this.configuration.document = configuration.document ? configuration.document : new Y.Doc()
     this.configuration.awareness = configuration.awareness ? configuration.awareness : new Awareness(this.document)
-    this.configuration.WebSocketPolyfill = configuration.WebSocketPolyfill ? configuration.WebSocketPolyfill : WebSocket
 
     this.on('open', this.configuration.onOpen)
-    this.on('authenticated', this.configuration.onAuthenticated)
-    this.on('authenticationFailed', this.configuration.onAuthenticationFailed)
-    this.on('connect', this.configuration.onConnect)
     this.on('message', this.configuration.onMessage)
     this.on('outgoingMessage', this.configuration.onOutgoingMessage)
     this.on('synced', this.configuration.onSynced)
-    this.on('status', this.configuration.onStatus)
-    this.on('disconnect', this.configuration.onDisconnect)
-    this.on('close', this.configuration.onClose)
     this.on('destroy', this.configuration.onDestroy)
     this.on('awarenessUpdate', this.configuration.onAwarenessUpdate)
     this.on('awarenessChange', this.configuration.onAwarenessChange)
+
+    this.configuration.websocketProvider.on('open', this.onOpen.bind(this))
+    this.configuration.websocketProvider.on('message', this.onMessage.bind(this))
+    this.configuration.websocketProvider.on('close', this.onClose.bind(this))
 
     this.awareness.on('update', () => {
       this.emit('awarenessUpdate', { states: awarenessStatesToArray(this.awareness.getStates()) })
@@ -164,6 +159,8 @@ export class HocuspocusProvider extends EventEmitter {
       )
     }
 
+    this.startSync()
+
   }
 
   public setConfiguration(configuration: Partial<HocuspocusProviderConfiguration> = {}): void {
@@ -183,10 +180,6 @@ export class HocuspocusProvider extends EventEmitter {
   }
 
   forceSync() {
-    if (!this.webSocket) {
-      return
-    }
-
     this.send(SyncStepOneMessage, { document: this.document, documentName: this.configuration.name })
   }
 
@@ -285,15 +278,13 @@ export class HocuspocusProvider extends EventEmitter {
       this.mux(() => { this.broadcast(message, args) })
     }
 
-    if (this.webSocket?.readyState === WsReadyStates.Open) {
-      console.log('Sending message from provider!')
-      console.log(message)
-      console.log(args)
-      const messageSender = new MessageSender(message, args)
+    console.log('Sending message from provider!')
+    console.log(message)
+    console.log(args)
+    const messageSender = new MessageSender(message, args)
 
-      this.emit('outgoingMessage', { message: messageSender.message })
-      messageSender.send(this.webSocket)
-    }
+    this.emit('outgoingMessage', { message: messageSender.message })
+    messageSender.send(this.configuration.websocketProvider)
   }
 
   onMessage(event: MessageEvent) {
@@ -305,6 +296,7 @@ export class HocuspocusProvider extends EventEmitter {
     console.log(`got msg for ${documentName}`)
 
     if (documentName !== this.configuration.name) {
+      console.log(`throwing away: ${documentName} doesnt match ${this.configuration.name}`)
       return // message is meant for another provider
     }
 

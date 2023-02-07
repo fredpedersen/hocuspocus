@@ -368,6 +368,7 @@ export class Hocuspocus {
   handleConnection(incoming: WebSocket, request: IncomingMessage, context: any = null): void {
     // Make sure to close an idle connection after a while.
     const closeIdleConnection = setTimeout(() => {
+      console.log('Terminating IDLE connection')
       incoming.close(Unauthorized.code, Unauthorized.reason)
     }, this.configuration.timeout)
 
@@ -536,9 +537,10 @@ export class Hocuspocus {
 
       if (documentConnections[documentName]) {
         // we already have a `Connection` set up for this document
-        console.log('connection already there')
+        console.log(`connection "${documentName}" already there`)
         return
       }
+      console.log('connection needs to be started!')
 
       documentConnections[documentName] = true
       hookPayload.documentName = documentName
