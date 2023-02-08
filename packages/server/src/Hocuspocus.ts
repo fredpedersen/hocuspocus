@@ -368,7 +368,6 @@ export class Hocuspocus {
   handleConnection(incoming: WebSocket, request: IncomingMessage, context: any = null): void {
     // Make sure to close an idle connection after a while.
     const closeIdleConnection = setTimeout(() => {
-      console.log('Terminating IDLE connection')
       incoming.close(Unauthorized.code, Unauthorized.reason)
     }, this.configuration.timeout)
 
@@ -411,14 +410,12 @@ export class Hocuspocus {
 
       // There’s no need to queue messages anymore.
       // Let’s work through queued messages.
-      console.log('emitting queue: ', incomingMessageQueue[documentName])
       incomingMessageQueue[documentName].forEach(input => {
         incoming.emit('message', input)
       })
 
       delete incomingMessageQueue[documentName]
       if (Object.keys(incomingMessageQueue).length === 0) {
-        console.log('removing queue listener')
         incoming.off('message', listener)
       }
 
@@ -427,14 +424,11 @@ export class Hocuspocus {
 
     // This listener handles authentication messages and queues everything else.
     const queueIncomingMessageListener = (data: Uint8Array) => {
-      console.log('queueIncomingMessageListener')
       try {
 
         const tmpMsg = new SocketIncomingMessage(data)
 
         const documentName = decoding.readVarString(tmpMsg.decoder)
-
-        console.log('queueIncomingMessageListener Data: ', data)
 
         // if (hookPayload.documentName !== documentName) {
         //   // message is meant for another listener
@@ -444,14 +438,10 @@ export class Hocuspocus {
 
         // TODO: the queueIncomingMessageHandler somehow mixes up the message right now; it's better now but I think this can be simplified a lot!tog
 
-        console.log('queueIncomingMessageListener: handling')
-
         const type = decoding.readVarUint(tmpMsg.decoder)
 
         // Okay, we’ve got the authentication message we’re waiting for:
         if (type === MessageType.Auth) {
-          console.log('queueIncomingMessageListener: auth')
-
           // The 2nd integer contains the submessage type
           // which will always be authentication when sent from client -> server
           decoding.readVarUint(tmpMsg.decoder)
@@ -488,7 +478,6 @@ export class Hocuspocus {
               return setUpNewConnection(documentName, queueIncomingMessageListener)
             })
             .catch((error = Forbidden) => {
-              console.log('onAuthenticate failed, sending error')
               const message = new OutgoingMessage(documentName).writePermissionDenied(error.reason ?? 'permission-denied')
 
               this.debugger.log({
@@ -512,8 +501,6 @@ export class Hocuspocus {
               })
             })
         } else {
-          console.log('queueIncomingMessageListener: queueing')
-
           // It’s not the Auth message we’re waiting for, so just queue it.
           if (!incomingMessageQueue[documentName]) {
             incomingMessageQueue[documentName] = []
@@ -524,8 +511,6 @@ export class Hocuspocus {
 
         // Catch errors due to failed decoding of data
       } catch (error) {
-        console.log('queueIncomingMessageListener ERROR')
-
         console.error(error)
         incoming.close(Unauthorized.code, Unauthorized.reason)
         incoming.off('message', queueIncomingMessageListener)
@@ -533,29 +518,20 @@ export class Hocuspocus {
     }
 
     const messageHandler = (data: Uint8Array) => {
-      // const data = new Uint8Array(x)
-      console.log('got message', data)
-
-      console.log('messageHandler')
       const tmpMsg = new SocketIncomingMessage(data)
 
       let documentName = ''
       try {
         documentName = decoding.readVarString(tmpMsg.decoder)
         const type = decoding.readVarUint(tmpMsg.decoder)
-
-        console.log(`Received ${type} for ${documentName}`)
       } catch (e) {
-        console.log('still didnt work :(')
         throw e
       }
 
       if (documentConnections[documentName]) {
         // we already have a `Connection` set up for this document
-        console.log(`connection "${documentName}" already there`)
         return
       }
-      console.log('connection needs to be started!')
 
       documentConnections[documentName] = true
 
@@ -565,7 +541,6 @@ export class Hocuspocus {
       this.hooks('onConnect', { ...hookPayload, documentName }, (contextAdditions: any) => {
         // merge context from all hooks
         context = { ...context, ...contextAdditions }
-        console.log('onConnect finished')
       })
         .then(() => {
           // Authentication is required, we’ll need to wait for the Authentication message.
@@ -576,7 +551,6 @@ export class Hocuspocus {
           return setUpNewConnection(documentName, queueIncomingMessageListener)
         })
         .catch((error = Forbidden) => {
-          console.log('caught error during onConnect')
           // if a hook interrupts, close the websocket connection
           try {
             incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)

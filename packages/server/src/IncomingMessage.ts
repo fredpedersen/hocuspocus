@@ -40,19 +40,11 @@ export class IncomingMessage {
   }
 
   readVarUint() {
-    const initialPos = this.decoder.pos
-
-    const value = readVarUint(this.decoder)
-    console.log(`Incoming Message: readVarUint: initialPos: ${initialPos} pos: ${this.decoder.pos} ${value}`)
-    return value
+    return readVarUint(this.decoder)
   }
 
   readVarString() {
-    const initialPos = this.decoder.pos
-
-    const value = readVarString(this.decoder)
-    console.log(`Incoming Message: readVarString: initialPos: ${initialPos} pos: ${this.decoder.pos} ${value}`)
-    return value
+    return readVarString(this.decoder)
   }
 
   toUint8Array() {

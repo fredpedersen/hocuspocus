@@ -31,9 +31,6 @@ export class MessageReceiver {
     const type = message.readVarUint()
     const emptyMessageLength = message.length
 
-    // console.log(message)
-    console.log(`Server received message of type ${type}`)
-
     switch (type) {
       case MessageType.Sync:
       case MessageType.SyncReply:
@@ -78,9 +75,6 @@ export class MessageReceiver {
 
   readSyncMessage(message: IncomingMessage, document: Document, connection?: Connection, reply?: (message: Uint8Array) => void, requestFirstSync = true) {
     const type = message.readVarUint()
-
-    console.log(`yjs message type ${type}`)
-    // console.log(this.message)
 
     switch (type) {
       case messageYjsSyncStep1: {

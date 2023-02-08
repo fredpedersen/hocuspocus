@@ -98,8 +98,6 @@ export class Connection {
    * Send the given message
    */
   send(message: any): void {
-    console.log('server sending new message to client:', message)
-
     if (
       this.webSocket.readyState === WsReadyStates.Closing
       || this.webSocket.readyState === WsReadyStates.Closed
@@ -181,18 +179,12 @@ export class Connection {
    * @private
    */
   private handleMessage(data: Uint8Array): void {
-    console.log('Connection::handleMessage', data)
-
     const message = new IncomingMessage(data)
     const documentName = message.readVarString()
 
-    // console.log(`Server received message for doc ${documentName}`)
-    //
     if (documentName !== this.document.name) return
 
     message.writeVarString(documentName)
-    //
-    // console.log(`Server handling message for doc ${documentName}`)
 
     this.callbacks.beforeHandleMessage(this.document, data)
       .then(() => {
@@ -210,25 +202,6 @@ export class Connection {
       })
   }
 
-  /**
-   * Get the underlying connection instance
-   * @deprecated
-   */
-  get instance(): WebSocket {
-    console.warn('connection.instance is deprecated, use `connection.webSocket` instead.')
-
-    return this.webSocket
-  }
-
-  /**
-   * Get the underlying connection instance
-   * @deprecated
-   */
-  public get connection(): WebSocket {
-    console.warn('connection.connection is deprecated, use `connection.webSocket` instead.')
-
-    return this.webSocket
-  }
 }
 
 export default Connection
