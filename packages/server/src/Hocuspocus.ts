@@ -425,19 +425,9 @@ export class Hocuspocus {
     // This listener handles authentication messages and queues everything else.
     const queueIncomingMessageListener = (data: Uint8Array) => {
       try {
-
         const tmpMsg = new SocketIncomingMessage(data)
 
         const documentName = decoding.readVarString(tmpMsg.decoder)
-
-        // if (hookPayload.documentName !== documentName) {
-        //   // message is meant for another listener
-        //   console.log('queueIncomingMessageListener: wrong listener')
-        //   return
-        // }
-
-        // TODO: the queueIncomingMessageHandler somehow mixes up the message right now; it's better now but I think this can be simplified a lot!tog
-
         const type = decoding.readVarUint(tmpMsg.decoder)
 
         // Okay, we’ve got the authentication message we’re waiting for:
@@ -520,13 +510,8 @@ export class Hocuspocus {
     const messageHandler = (data: Uint8Array) => {
       const tmpMsg = new SocketIncomingMessage(data)
 
-      let documentName = ''
-      try {
-        documentName = decoding.readVarString(tmpMsg.decoder)
-        const type = decoding.readVarUint(tmpMsg.decoder)
-      } catch (e) {
-        throw e
-      }
+      const documentName = decoding.readVarString(tmpMsg.decoder)
+      const type = decoding.readVarUint(tmpMsg.decoder)
 
       if (documentConnections[documentName]) {
         // we already have a `Connection` set up for this document
@@ -535,6 +520,8 @@ export class Hocuspocus {
 
       documentConnections[documentName] = true
 
+      // this will now lead to messages being applied multiple times (if the providers immediately try to sync two documents). Probably
+      // the entire queueing logic should be revamped. Authentication also needs to be checked, probably right now it wont work at all.
       incoming.on('message', queueIncomingMessageListener)
       queueIncomingMessageListener(data)
 
