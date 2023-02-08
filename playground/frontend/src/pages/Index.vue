@@ -7,6 +7,7 @@
     <StatusBar
       v-if="provider"
       :provider="provider"
+      :socket="socket"
     />
 
     <h2>
@@ -24,6 +25,7 @@
     <StatusBar
       v-if="anotherProvider"
       :provider="anotherProvider"
+      :socket="socket"
     />
 
     <h2>
@@ -61,6 +63,7 @@ export default {
       anotherProvider: null,
       editor: null,
       anotherEditor: null,
+      socket: null,
     }
   },
 
@@ -73,6 +76,7 @@ export default {
     const socket = new HocuspocusProviderWebsocket({
       url: 'ws://127.0.0.1:1234',
     })
+    this.socket = socket
 
     this.provider = new HocuspocusProvider({
       websocketProvider: socket,

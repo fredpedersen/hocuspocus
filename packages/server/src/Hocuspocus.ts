@@ -386,7 +386,6 @@ export class Hocuspocus {
     // The `onConnect` and `onAuthenticate` hooks need some context
     // to decide who’s connecting, so let’s put it together:
     const hookPayload = {
-      documentName: '',
       instance: this,
       request,
       requestHeaders: request.headers,
@@ -399,7 +398,7 @@ export class Hocuspocus {
 
     // While the connection will be establishing messages will
     // be queued and handled later.
-    const incomingMessageQueue: Uint8Array[] = []
+    const incomingMessageQueue: Record<string, Uint8Array[]> = {}
 
     // Once all hooks are run, we’ll fully establish the connection:
     const setUpNewConnection = async (documentName: string, listener: (input: Uint8Array) => void) => {
@@ -411,31 +410,43 @@ export class Hocuspocus {
       this.createConnection(incoming, request, document, socketId, connection.readOnly, context)
 
       // There’s no need to queue messages anymore.
-      incoming.off('message', listener)
       // Let’s work through queued messages.
-      console.log('emitting queue: ', incomingMessageQueue)
-      incomingMessageQueue.forEach(input => {
+      console.log('emitting queue: ', incomingMessageQueue[documentName])
+      incomingMessageQueue[documentName].forEach(input => {
         incoming.emit('message', input)
       })
 
-      this.hooks('connected', hookPayload)
+      delete incomingMessageQueue[documentName]
+      if (Object.keys(incomingMessageQueue).length === 0) {
+        console.log('removing queue listener')
+        incoming.off('message', listener)
+      }
+
+      this.hooks('connected', { ...hookPayload, documentName })
     }
 
     // This listener handles authentication messages and queues everything else.
     const queueIncomingMessageListener = (data: Uint8Array) => {
       console.log('queueIncomingMessageListener')
       try {
-        const decoder = decoding.createDecoder(data)
 
-        if (hookPayload.documentName !== decoding.readVarString(decoder)) {
-          // message is meant for another listener
-          console.log('queueIncomingMessageListener: wrong listener')
-          return
-        }
+        const tmpMsg = new SocketIncomingMessage(data)
+
+        const documentName = decoding.readVarString(tmpMsg.decoder)
+
+        console.log('queueIncomingMessageListener Data: ', data)
+
+        // if (hookPayload.documentName !== documentName) {
+        //   // message is meant for another listener
+        //   console.log('queueIncomingMessageListener: wrong listener')
+        //   return
+        // }
+
+        // TODO: the queueIncomingMessageHandler somehow mixes up the message right now; it's better now but I think this can be simplified a lot!tog
 
         console.log('queueIncomingMessageListener: handling')
 
-        const type = decoding.readVarUint(decoder)
+        const type = decoding.readVarUint(tmpMsg.decoder)
 
         // Okay, we’ve got the authentication message we’re waiting for:
         if (type === MessageType.Auth) {
@@ -443,8 +454,8 @@ export class Hocuspocus {
 
           // The 2nd integer contains the submessage type
           // which will always be authentication when sent from client -> server
-          decoding.readVarUint(decoder)
-          const token = decoding.readVarString(decoder)
+          decoding.readVarUint(tmpMsg.decoder)
+          const token = decoding.readVarString(tmpMsg.decoder)
 
           this.debugger.log({
             direction: 'in',
@@ -462,7 +473,7 @@ export class Hocuspocus {
               connection.isAuthenticated = true
 
               // Let the client know that authentication was successful.
-              const message = new OutgoingMessage(hookPayload.documentName).writeAuthenticated()
+              const message = new OutgoingMessage(documentName).writeAuthenticated()
 
               this.debugger.log({
                 direction: 'out',
@@ -474,11 +485,11 @@ export class Hocuspocus {
             })
             .then(() => {
               // Time to actually establish the connection.
-              return setUpNewConnection(hookPayload.documentName, queueIncomingMessageListener)
+              return setUpNewConnection(documentName, queueIncomingMessageListener)
             })
             .catch((error = Forbidden) => {
               console.log('onAuthenticate failed, sending error')
-              const message = new OutgoingMessage(hookPayload.documentName).writePermissionDenied(error.reason ?? 'permission-denied')
+              const message = new OutgoingMessage(documentName).writePermissionDenied(error.reason ?? 'permission-denied')
 
               this.debugger.log({
                 direction: 'out',
@@ -504,7 +515,11 @@ export class Hocuspocus {
           console.log('queueIncomingMessageListener: queueing')
 
           // It’s not the Auth message we’re waiting for, so just queue it.
-          incomingMessageQueue.push(data)
+          if (!incomingMessageQueue[documentName]) {
+            incomingMessageQueue[documentName] = []
+          }
+
+          incomingMessageQueue[documentName].push(data)
         }
 
         // Catch errors due to failed decoding of data
@@ -543,12 +558,11 @@ export class Hocuspocus {
       console.log('connection needs to be started!')
 
       documentConnections[documentName] = true
-      hookPayload.documentName = documentName
 
       incoming.on('message', queueIncomingMessageListener)
       queueIncomingMessageListener(data)
 
-      this.hooks('onConnect', hookPayload, (contextAdditions: any) => {
+      this.hooks('onConnect', { ...hookPayload, documentName }, (contextAdditions: any) => {
         // merge context from all hooks
         context = { ...context, ...contextAdditions }
         console.log('onConnect finished')
@@ -559,7 +573,7 @@ export class Hocuspocus {
             return
           }
 
-          return setUpNewConnection(hookPayload.documentName, queueIncomingMessageListener)
+          return setUpNewConnection(documentName, queueIncomingMessageListener)
         })
         .catch((error = Forbidden) => {
           console.log('caught error during onConnect')
