@@ -1,7 +1,7 @@
 import * as time from 'lib0/time'
 import * as mutex from 'lib0/mutex'
 import * as url from 'lib0/url'
-import type { CloseEvent } from 'ws'
+import type { CloseEvent, MessageEvent } from 'ws'
 import { retry } from '@lifeomic/attempt'
 import {
   Forbidden, Unauthorized, WsReadyStates,
@@ -187,6 +187,7 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     this.on('awarenessChange', this.configuration.onAwarenessChange)
 
     this.on('close', this.onClose.bind(this))
+    this.on('message', this.onMessage.bind(this))
 
     this.registerEventListeners()
 
@@ -294,6 +295,10 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
         reject,
       }
     })
+  }
+
+  onMessage(event: MessageEvent) {
+    this.resolveConnectionAttempt()
   }
 
   resolveConnectionAttempt() {

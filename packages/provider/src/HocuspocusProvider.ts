@@ -2,10 +2,8 @@ import * as Y from 'yjs'
 import * as bc from 'lib0/broadcastchannel'
 import { Awareness, removeAwarenessStates } from 'y-protocols/awareness'
 import * as mutex from 'lib0/mutex'
-import type { Event, CloseEvent, MessageEvent } from 'ws'
-import {
-  awarenessStatesToArray, WsReadyStates,
-} from '@hocuspocus/common'
+import type { CloseEvent, Event, MessageEvent } from 'ws'
+import { awarenessStatesToArray } from '@hocuspocus/common'
 import EventEmitter from './EventEmitter'
 import { IncomingMessage } from './IncomingMessage'
 import { MessageReceiver } from './MessageReceiver'
@@ -17,7 +15,16 @@ import { AuthenticationMessage } from './OutgoingMessages/AuthenticationMessage'
 import { AwarenessMessage } from './OutgoingMessages/AwarenessMessage'
 import { UpdateMessage } from './OutgoingMessages/UpdateMessage'
 import {
-  ConstructableOutgoingMessage, onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, onSyncedParameters, WebSocketStatus,
+  ConstructableOutgoingMessage,
+  onAuthenticationFailedParameters,
+  onCloseParameters,
+  onDisconnectParameters,
+  onMessageParameters,
+  onOpenParameters,
+  onOutgoingMessageParameters,
+  onStatusParameters,
+  onSyncedParameters,
+  WebSocketStatus,
 } from './types'
 import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
 import { HocuspocusProviderWebsocket } from './HocuspocusProviderWebsocket'
@@ -136,6 +143,7 @@ export class HocuspocusProvider extends EventEmitter {
     this.on('awarenessUpdate', this.configuration.onAwarenessUpdate)
     this.on('awarenessChange', this.configuration.onAwarenessChange)
 
+    this.configuration.websocketProvider.on('connect', this.configuration.onConnect)
     this.configuration.websocketProvider.on('open', this.onOpen.bind(this))
     this.configuration.websocketProvider.on('message', this.onMessage.bind(this))
     this.configuration.websocketProvider.on('close', this.onClose.bind(this))
