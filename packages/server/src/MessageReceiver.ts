@@ -68,7 +68,7 @@ export class MessageReceiver {
 
         break
       default:
-        console.log(`Unable to handle message of type ${type}: no handler defined!`)
+        console.error(`Unable to handle message of type ${type}: no handler defined!`)
         // Do nothing
     }
   }

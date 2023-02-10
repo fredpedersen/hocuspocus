@@ -278,9 +278,6 @@ export class HocuspocusProvider extends EventEmitter {
       this.mux(() => { this.broadcast(message, args) })
     }
 
-    console.log('Sending message from provider!')
-    console.log(message)
-    console.log(args)
     const messageSender = new MessageSender(message, args)
 
     this.emit('outgoingMessage', { message: messageSender.message })
@@ -288,15 +285,12 @@ export class HocuspocusProvider extends EventEmitter {
   }
 
   onMessage(event: MessageEvent) {
-    console.log('Provider received message!', event)
 
     const message = new IncomingMessage(event.data)
 
     const documentName = message.readVarString()
-    console.log(`got msg for ${documentName}`)
 
     if (documentName !== this.configuration.name) {
-      console.log(`throwing away: ${documentName} doesnt match ${this.configuration.name}`)
       return // message is meant for another provider
     }
 

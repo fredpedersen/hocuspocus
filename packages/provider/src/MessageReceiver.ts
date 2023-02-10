@@ -26,7 +26,6 @@ export class MessageReceiver {
     const { message } = this
     const type = message.readVarUint()
 
-    console.log(`provider applying ${type}`)
     const emptyMessageLength = message.length()
 
     switch (type) {
@@ -52,8 +51,6 @@ export class MessageReceiver {
 
     // Reply
     if (message.length() > emptyMessageLength + 1) { // length of documentName (considered in emptyMessageLength plus length of yjs sync type, set in applySyncMessage)
-      console.log('sync message to be sent', message.encoder)
-
       if (this.broadcasted) {
         // TODO: Some weird TypeScript error
         // @ts-ignore

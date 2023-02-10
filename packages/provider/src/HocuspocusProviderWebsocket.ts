@@ -1,26 +1,14 @@
-import * as Y from 'yjs'
-import * as bc from 'lib0/broadcastchannel'
 import * as time from 'lib0/time'
-import { Awareness, removeAwarenessStates } from 'y-protocols/awareness'
 import * as mutex from 'lib0/mutex'
 import * as url from 'lib0/url'
-import type { Event, CloseEvent, MessageEvent } from 'ws'
+import type { CloseEvent } from 'ws'
 import { retry } from '@lifeomic/attempt'
 import {
-  awarenessStatesToArray, Forbidden, Unauthorized, WsReadyStates,
+  Forbidden, Unauthorized, WsReadyStates,
 } from '@hocuspocus/common'
 import EventEmitter from './EventEmitter'
-import { IncomingMessage } from './IncomingMessage'
-import { MessageReceiver } from './MessageReceiver'
-import { MessageSender } from './MessageSender'
-import { SyncStepOneMessage } from './OutgoingMessages/SyncStepOneMessage'
-import { SyncStepTwoMessage } from './OutgoingMessages/SyncStepTwoMessage'
-import { QueryAwarenessMessage } from './OutgoingMessages/QueryAwarenessMessage'
-import { AuthenticationMessage } from './OutgoingMessages/AuthenticationMessage'
-import { AwarenessMessage } from './OutgoingMessages/AwarenessMessage'
-import { UpdateMessage } from './OutgoingMessages/UpdateMessage'
 import {
-  ConstructableOutgoingMessage, onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, onSyncedParameters, WebSocketStatus,
+  onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, onSyncedParameters, WebSocketStatus,
 } from './types'
 import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
 
@@ -413,7 +401,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
 
   send(message: any) {
     if (this.webSocket?.readyState === WsReadyStates.Open) {
-      console.log('Sending message from websocket provider!')
       this.webSocket.send(message)
     }
   }
