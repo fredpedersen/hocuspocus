@@ -393,6 +393,7 @@ export class Hocuspocus {
       connection,
     }
 
+    // this map indicates whether a `Connection` instance has already taken over for incoming message for the key (i.e. documentName)
     const documentConnections: Record<string, boolean> = {}
 
     // While the connection will be establishing messages will
@@ -400,7 +401,7 @@ export class Hocuspocus {
     const incomingMessageQueue: Record<string, Uint8Array[]> = {}
 
     // Once all hooks are run, we’ll fully establish the connection:
-    const setUpNewConnection = async (documentName: string, listener: (input: Uint8Array) => void) => {
+    const setUpNewConnection = async (documentName: string) => {
       // Not an idle connection anymore, no need to close it then.
       clearTimeout(closeIdleConnection)
 
@@ -408,22 +409,19 @@ export class Hocuspocus {
       const document = await this.createDocument(documentName, request, socketId, connection, context)
       this.createConnection(incoming, request, document, socketId, connection.readOnly, context)
 
+      documentConnections[documentName] = true
+
       // There’s no need to queue messages anymore.
       // Let’s work through queued messages.
       incomingMessageQueue[documentName].forEach(input => {
         incoming.emit('message', input)
       })
 
-      delete incomingMessageQueue[documentName]
-      if (Object.keys(incomingMessageQueue).length === 0) {
-        incoming.off('message', listener)
-      }
-
       this.hooks('connected', { ...hookPayload, documentName })
     }
 
     // This listener handles authentication messages and queues everything else.
-    const queueIncomingMessageListener = (data: Uint8Array) => {
+    const handleQueueingMessage = (data: Uint8Array) => {
       try {
         const tmpMsg = new SocketIncomingMessage(data)
 
@@ -465,7 +463,7 @@ export class Hocuspocus {
             })
             .then(() => {
               // Time to actually establish the connection.
-              return setUpNewConnection(documentName, queueIncomingMessageListener)
+              return setUpNewConnection(documentName)
             })
             .catch((error = Forbidden) => {
               const message = new OutgoingMessage(documentName).writePermissionDenied(error.reason ?? 'permission-denied')
@@ -486,16 +484,9 @@ export class Hocuspocus {
                   console.error(closeError)
                   incoming.close(Forbidden.code, Forbidden.reason)
                 }
-
-                incoming.off('message', queueIncomingMessageListener)
               })
             })
         } else {
-          // It’s not the Auth message we’re waiting for, so just queue it.
-          if (!incomingMessageQueue[documentName]) {
-            incomingMessageQueue[documentName] = []
-          }
-
           incomingMessageQueue[documentName].push(data)
         }
 
@@ -503,7 +494,6 @@ export class Hocuspocus {
       } catch (error) {
         console.error(error)
         incoming.close(Unauthorized.code, Unauthorized.reason)
-        incoming.off('message', queueIncomingMessageListener)
       }
     }
 
@@ -511,44 +501,41 @@ export class Hocuspocus {
       const tmpMsg = new SocketIncomingMessage(data)
 
       const documentName = decoding.readVarString(tmpMsg.decoder)
-      const type = decoding.readVarUint(tmpMsg.decoder)
 
-      if (documentConnections[documentName]) {
+      if (documentConnections[documentName] === true) {
         // we already have a `Connection` set up for this document
         return
       }
 
-      documentConnections[documentName] = true
+      // if this is the first message, trigger onConnect & check if we can start the connection (only if no auth is required)
+      if (incomingMessageQueue[documentName] === undefined) {
+        incomingMessageQueue[documentName] = []
 
-      // this will now lead to messages being applied multiple times (if the providers immediately try to sync two documents). Probably
-      // the entire queueing logic should be revamped. Authentication also needs to be checked, probably right now it wont work at all.
-      incoming.on('message', queueIncomingMessageListener)
-      queueIncomingMessageListener(data)
-
-      this.hooks('onConnect', { ...hookPayload, documentName }, (contextAdditions: any) => {
+        this.hooks('onConnect', { ...hookPayload, documentName }, (contextAdditions: any) => {
         // merge context from all hooks
-        context = { ...context, ...contextAdditions }
-      })
-        .then(() => {
+          context = { ...context, ...contextAdditions }
+        })
+          .then(() => {
           // Authentication is required, we’ll need to wait for the Authentication message.
-          if (connection.requiresAuthentication && !connection.isAuthenticated) {
-            return
-          }
+            if (connection.requiresAuthentication && !connection.isAuthenticated) {
+              return
+            }
 
-          return setUpNewConnection(documentName, queueIncomingMessageListener)
-        })
-        .catch((error = Forbidden) => {
-          // if a hook interrupts, close the websocket connection
-          try {
-            incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)
-          } catch (closeError) {
+            return setUpNewConnection(documentName)
+          })
+          .catch((error = Forbidden) => {
+            // if a hook interrupts, close the websocket connection
+            try {
+              incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)
+            } catch (closeError) {
             // catch is needed in case invalid error code is returned by hook (that would fail sending the close message)
-            console.error(closeError)
-            incoming.close(Unauthorized.code, Unauthorized.reason)
-          }
+              console.error(closeError)
+              incoming.close(Unauthorized.code, Unauthorized.reason)
+            }
+          })
+      }
 
-          incoming.off('message', queueIncomingMessageListener)
-        })
+      handleQueueingMessage(data)
 
     }
 
