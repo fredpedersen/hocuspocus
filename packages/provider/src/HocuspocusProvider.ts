@@ -26,8 +26,8 @@ import {
   onSyncedParameters,
   WebSocketStatus,
 } from './types'
-import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
 import { HocuspocusProviderWebsocket } from './HocuspocusProviderWebsocket'
+import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
 
 export type HocuspocusProviderConfiguration =
   Required<Pick<CompleteHocuspocusProviderConfiguration, 'name' | 'websocketProvider'>>
@@ -146,15 +146,23 @@ export class HocuspocusProvider extends EventEmitter {
     this.on('awarenessChange', this.configuration.onAwarenessChange)
 
     this.configuration.websocketProvider.on('connect', this.configuration.onConnect)
+    this.configuration.websocketProvider.on('connect', (e: Event) => this.emit('connect', { event: e }))
 
     this.configuration.websocketProvider.on('open', this.onOpen.bind(this))
+    this.configuration.websocketProvider.on('open', (e: Event) => this.emit('open', { event: e }))
+
     this.configuration.websocketProvider.on('message', this.onMessage.bind(this))
+    this.configuration.websocketProvider.on('message', (e: Event) => this.emit('message', { event: e }))
 
     this.configuration.websocketProvider.on('close', this.onClose.bind(this))
     this.configuration.websocketProvider.on('close', this.configuration.onClose)
+    this.configuration.websocketProvider.on('close', (e: Event) => this.emit('close', { event: e }))
 
     this.configuration.websocketProvider.on('status', this.onStatus.bind(this))
+    this.configuration.websocketProvider.on('status', (e: Event) => this.emit('status', { event: e }))
+
     this.configuration.websocketProvider.on('disconnect', this.configuration.onDisconnect)
+    this.configuration.websocketProvider.on('disconnect', (e: Event) => this.emit('disconnect', { event: e }))
 
     this.awareness.on('update', () => {
       this.emit('awarenessUpdate', { states: awarenessStatesToArray(this.awareness.getStates()) })

@@ -1,7 +1,7 @@
 import test from 'ava'
 import { newHocuspocus, newHocuspocusProviderWebsocket } from '../utils'
 
-test('tttt', async t => {
+test('has default configuration (maxDelay = 30000)', async t => {
   const server = await newHocuspocus()
   const client = newHocuspocusProviderWebsocket(server)
 
