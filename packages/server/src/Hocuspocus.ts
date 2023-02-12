@@ -498,44 +498,50 @@ export class Hocuspocus {
     }
 
     const messageHandler = (data: Uint8Array) => {
-      const tmpMsg = new SocketIncomingMessage(data)
+      try {
+        const tmpMsg = new SocketIncomingMessage(data)
 
-      const documentName = decoding.readVarString(tmpMsg.decoder)
+        const documentName = decoding.readVarString(tmpMsg.decoder)
 
-      if (documentConnections[documentName] === true) {
-        // we already have a `Connection` set up for this document
-        return
-      }
+        if (documentConnections[documentName] === true) {
+          // we already have a `Connection` set up for this document
+          return
+        }
 
-      // if this is the first message, trigger onConnect & check if we can start the connection (only if no auth is required)
-      if (incomingMessageQueue[documentName] === undefined) {
-        incomingMessageQueue[documentName] = []
+        // if this is the first message, trigger onConnect & check if we can start the connection (only if no auth is required)
+        if (incomingMessageQueue[documentName] === undefined) {
+          incomingMessageQueue[documentName] = []
 
-        this.hooks('onConnect', { ...hookPayload, documentName }, (contextAdditions: any) => {
-        // merge context from all hooks
-          context = { ...context, ...contextAdditions }
-        })
-          .then(() => {
-          // Authentication is required, we’ll need to wait for the Authentication message.
-            if (connection.requiresAuthentication && !connection.isAuthenticated) {
-              return
-            }
-
-            return setUpNewConnection(documentName)
+          this.hooks('onConnect', { ...hookPayload, documentName }, (contextAdditions: any) => {
+            // merge context from all hooks
+            context = { ...context, ...contextAdditions }
           })
-          .catch((error = Forbidden) => {
-            // if a hook interrupts, close the websocket connection
-            try {
-              incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)
-            } catch (closeError) {
-            // catch is needed in case invalid error code is returned by hook (that would fail sending the close message)
-              console.error(closeError)
-              incoming.close(Unauthorized.code, Unauthorized.reason)
-            }
-          })
-      }
+            .then(() => {
+              // Authentication is required, we’ll need to wait for the Authentication message.
+              if (connection.requiresAuthentication && !connection.isAuthenticated) {
+                return
+              }
 
-      handleQueueingMessage(data)
+              return setUpNewConnection(documentName)
+            })
+            .catch((error = Forbidden) => {
+              // if a hook interrupts, close the websocket connection
+              try {
+                incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)
+              } catch (closeError) {
+                // catch is needed in case invalid error code is returned by hook (that would fail sending the close message)
+                console.error(closeError)
+                incoming.close(Unauthorized.code, Unauthorized.reason)
+              }
+            })
+        }
+
+        handleQueueingMessage(data)
+      } catch (closeError) {
+        // catch is needed in case an invalid payload crashes the parsing of the Uint8Array
+        console.error(closeError)
+        incoming.close(Unauthorized.code, Unauthorized.reason)
+      }
 
     }
 

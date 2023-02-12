@@ -65,7 +65,7 @@ test('adds and removes connections properly', async t => {
     tt.is(server.getConnectionsCount(), 5)
   })
 
-  providers.forEach(provider => provider.disconnect())
+  providers.forEach(provider => { provider.disconnect(); provider.configuration.websocketProvider.disconnect() })
 
   await retryableAssertion(t, tt => {
     tt.is(server.getConnectionsCount(), 0)

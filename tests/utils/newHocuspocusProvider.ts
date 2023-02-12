@@ -1,6 +1,6 @@
 import {
   HocuspocusProvider,
-  HocuspocusProviderConfiguration,
+  HocuspocusProviderConfiguration, HocuspocusProviderWebsocketConfiguration,
 } from '@hocuspocus/provider'
 import { Hocuspocus } from '@hocuspocus/server'
 import { newHocuspocusProviderWebsocket } from './newHocuspocusProviderWebsocket'
@@ -8,9 +8,10 @@ import { newHocuspocusProviderWebsocket } from './newHocuspocusProviderWebsocket
 export const newHocuspocusProvider = (
   server: Hocuspocus,
   options: Partial<HocuspocusProviderConfiguration> = {},
+  websocketOptions: Partial<HocuspocusProviderWebsocketConfiguration> = {},
 ): HocuspocusProvider => {
   return new HocuspocusProvider({
-    websocketProvider: newHocuspocusProviderWebsocket(server, options),
+    websocketProvider: newHocuspocusProviderWebsocket(server, websocketOptions),
     // Just use a generic document name for all tests.
     name: 'hocuspocus-test',
     // There is no need to share data with other browser tabs in the testing environment.

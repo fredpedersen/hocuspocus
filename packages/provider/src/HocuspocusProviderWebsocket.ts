@@ -83,7 +83,6 @@ export interface CompleteHocuspocusProviderWebsocketConfiguration {
   onMessage: (data: onMessageParameters) => void,
   onOutgoingMessage: (data: onOutgoingMessageParameters) => void,
   onStatus: (data: onStatusParameters) => void,
-  onSynced: (data: onSyncedParameters) => void,
   onDisconnect: (data: onDisconnectParameters) => void,
   onClose: (data: onCloseParameters) => void,
   onDestroy: () => void,
@@ -133,7 +132,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     onMessage: () => null,
     onOutgoingMessage: () => null,
     onStatus: () => null,
-    onSynced: () => null,
     onDisconnect: () => null,
     onClose: () => null,
     onDestroy: () => null,
@@ -178,7 +176,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     this.on('connect', this.configuration.onConnect)
     this.on('message', this.configuration.onMessage)
     this.on('outgoingMessage', this.configuration.onOutgoingMessage)
-    this.on('synced', this.configuration.onSynced)
     this.on('status', this.configuration.onStatus)
     this.on('disconnect', this.configuration.onDisconnect)
     this.on('close', this.configuration.onClose)
