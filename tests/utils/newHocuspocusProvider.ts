@@ -10,7 +10,7 @@ export const newHocuspocusProvider = (
   options: Partial<HocuspocusProviderConfiguration> = {},
 ): HocuspocusProvider => {
   return new HocuspocusProvider({
-    websocketProvider: newHocuspocusProviderWebsocket(server),
+    websocketProvider: newHocuspocusProviderWebsocket(server, options),
     // Just use a generic document name for all tests.
     name: 'hocuspocus-test',
     // There is no need to share data with other browser tabs in the testing environment.

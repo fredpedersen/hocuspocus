@@ -278,7 +278,7 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
       const ws = new this.configuration.WebSocketPolyfill(this.url)
       ws.binaryType = 'arraybuffer'
       ws.onmessage = (payload: any) => this.emit('message', payload)
-      ws.onclose = (payload: any) => this.emit('close', payload)
+      ws.onclose = (payload: any) => this.emit('close', { event: payload })
       ws.onopen = (payload: any) => this.emit('open', payload)
       ws.onerror = (err: any) => {
         reject(err)
@@ -350,18 +350,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     window.addEventListener('online', this.boundConnect)
   }
 
-  permissionDeniedHandler(reason: string) {
-    this.emit('authenticationFailed', { reason })
-    this.isAuthenticated = false
-    this.shouldConnect = false
-  }
-
-  authenticatedHandler() {
-    this.isAuthenticated = true
-
-    this.emit('authenticated')
-  }
-
   // Ensure that the URL always ends with /
   get serverUrl() {
     while (this.configuration.url[this.configuration.url.length - 1] === '/') {
@@ -410,7 +398,7 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     }
   }
 
-  onClose(event: CloseEvent) {
+  onClose({ event }: onCloseParameters) {
     this.webSocket = null
     this.isAuthenticated = false
 

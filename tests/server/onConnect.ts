@@ -199,7 +199,7 @@ test('has the whole request', async t => {
   await new Promise(async resolve => {
     const server = await newHocuspocus({
       async onConnect({ request }) {
-        t.is(request.url, '/hocuspocus-test')
+        t.is(request.url, '/')
         resolve('done')
       },
     })

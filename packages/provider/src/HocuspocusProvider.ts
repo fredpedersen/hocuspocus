@@ -120,6 +120,8 @@ export class HocuspocusProvider extends EventEmitter {
 
   unsyncedChanges = 0
 
+  status = WebSocketStatus.Disconnected
+
   isAuthenticated = false
 
   mux = mutex.createMutex()
@@ -144,9 +146,14 @@ export class HocuspocusProvider extends EventEmitter {
     this.on('awarenessChange', this.configuration.onAwarenessChange)
 
     this.configuration.websocketProvider.on('connect', this.configuration.onConnect)
+
     this.configuration.websocketProvider.on('open', this.onOpen.bind(this))
     this.configuration.websocketProvider.on('message', this.onMessage.bind(this))
+
     this.configuration.websocketProvider.on('close', this.onClose.bind(this))
+    this.configuration.websocketProvider.on('close', this.configuration.onClose)
+
+    this.configuration.websocketProvider.on('status', this.onStatus.bind(this))
 
     this.awareness.on('update', () => {
       this.emit('awarenessUpdate', { states: awarenessStatesToArray(this.awareness.getStates()) })
@@ -169,6 +176,10 @@ export class HocuspocusProvider extends EventEmitter {
 
     this.startSync()
 
+  }
+
+  private onStatus({ status } : {status: WebSocketStatus}) {
+    this.status = status
   }
 
   public setConfiguration(configuration: Partial<HocuspocusProviderConfiguration> = {}): void {
@@ -342,6 +353,17 @@ export class HocuspocusProvider extends EventEmitter {
     }
 
     window.removeEventListener('beforeunload', this.boundBeforeUnload)
+  }
+
+  permissionDeniedHandler(reason: string) {
+    this.emit('authenticationFailed', { reason })
+    this.isAuthenticated = false
+  }
+
+  authenticatedHandler() {
+    this.isAuthenticated = true
+
+    this.emit('authenticated')
   }
 
   get broadcastChannel() {
