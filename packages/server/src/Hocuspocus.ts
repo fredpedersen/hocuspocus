@@ -485,8 +485,6 @@ export class Hocuspocus {
                     console.error(closeError)
                     incoming.close(Forbidden.code, Forbidden.reason)
                   }
-                } else {
-
                 }
               })
             })
