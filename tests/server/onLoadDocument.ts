@@ -269,7 +269,8 @@ test('if a new connection connects while the previous connection still fetches t
 
     let provider1MessagesReceived = 0
     const provider = newHocuspocusProvider(server, {
-      onSynced() {
+      onSynced({ state }) {
+        // if (!state) return
         t.is(server.documents.size, 1)
 
         const value = provider.document.getArray('foo').get(0)
@@ -300,7 +301,9 @@ test('if a new connection connects while the previous connection still fetches t
     let provider2MessagesReceived = 0
     setTimeout(() => {
       const provider2 = newHocuspocusProvider(server, {
-        onSynced() {
+        onSynced({ state }) {
+          // if (!state) return
+
           t.is(server.documents.size, 1)
 
           const value = provider.document.getArray('foo').get(0)

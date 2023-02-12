@@ -15,7 +15,6 @@ test('outputs the message log', async t => {
       token: 'secret',
       onSynced() {
         t.true(server.getMessageLogs().length > 0)
-
         resolve('done')
       },
     })

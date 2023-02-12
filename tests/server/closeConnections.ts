@@ -8,6 +8,7 @@ import { retryableAssertion } from '../utils/retryableAssertion'
 test('closes all connections', async t => {
   const server = await newHocuspocus()
   const socket = newHocuspocusProviderWebsocket(server)
+  const socket2 = newHocuspocusProviderWebsocket(server)
 
   const provider = newHocuspocusProvider(server, {
     name: 'hocuspocus-test',
@@ -22,9 +23,9 @@ test('closes all connections', async t => {
     name: 'hocuspocus-test-2',
     onClose() {
       // Make sure it doesn’t reconnect.
-      socket.disconnect()
+      socket2.disconnect()
     },
-    websocketProvider: socket,
+    websocketProvider: socket2,
   })
 
   await sleep(100)
@@ -41,6 +42,7 @@ test('closes all connections', async t => {
 test('closes a specific connection when a documentName is passed', async t => {
   const server = await newHocuspocus()
   const socket = newHocuspocusProviderWebsocket(server)
+  const socket2 = newHocuspocusProviderWebsocket(server)
 
   const provider = newHocuspocusProvider(server, {
     name: 'hocuspocus-test',
@@ -53,7 +55,7 @@ test('closes a specific connection when a documentName is passed', async t => {
 
   const anotherProvider = newHocuspocusProvider(server, {
     name: 'hocuspocus-test-2',
-    websocketProvider: socket,
+    websocketProvider: socket2,
   })
 
   await sleep(100)

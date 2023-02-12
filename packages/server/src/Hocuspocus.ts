@@ -1,8 +1,9 @@
+import { createServer, IncomingMessage, Server as HTTPServer } from 'http'
+import { URLSearchParams } from 'url'
+import { ListenOptions } from 'net'
 import * as decoding from 'lib0/decoding'
 import WebSocket, { AddressInfo, WebSocketServer } from 'ws'
-import { createServer, IncomingMessage, Server as HTTPServer } from 'http'
 import { Doc, encodeStateAsUpdate, applyUpdate } from 'yjs'
-import { URLSearchParams } from 'url'
 import { v4 as uuid } from 'uuid'
 import kleur from 'kleur'
 import {
@@ -12,7 +13,7 @@ import {
   awarenessStatesToArray,
   WsReadyStates,
 } from '@hocuspocus/common'
-import { ListenOptions } from 'net'
+import meta from '../package.json' assert {type: 'json'}
 import { IncomingMessage as SocketIncomingMessage } from './IncomingMessage'
 import {
   MessageType,
@@ -26,7 +27,6 @@ import {
 import Document from './Document'
 import Connection from './Connection'
 import { OutgoingMessage } from './OutgoingMessage'
-import meta from '../package.json' assert {type: 'json'}
 import { Debugger } from './Debugger'
 
 export const defaultConfiguration = {
@@ -546,7 +546,6 @@ export class Hocuspocus {
     }
 
     incoming.on('message', messageHandler)
-
   }
 
   /**

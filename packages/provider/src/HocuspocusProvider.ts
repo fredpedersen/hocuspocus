@@ -145,6 +145,9 @@ export class HocuspocusProvider extends EventEmitter {
     this.on('awarenessUpdate', this.configuration.onAwarenessUpdate)
     this.on('awarenessChange', this.configuration.onAwarenessChange)
 
+    this.on('authenticated', this.configuration.onAuthenticated)
+    this.on('authenticationFailed', this.configuration.onAuthenticationFailed)
+
     this.configuration.websocketProvider.on('connect', this.configuration.onConnect)
     this.configuration.websocketProvider.on('connect', (e: Event) => this.emit('connect', { event: e }))
 
@@ -152,7 +155,6 @@ export class HocuspocusProvider extends EventEmitter {
     this.configuration.websocketProvider.on('open', (e: Event) => this.emit('open', { event: e }))
 
     this.configuration.websocketProvider.on('message', this.onMessage.bind(this))
-    this.configuration.websocketProvider.on('message', (e: Event) => this.emit('message', { event: e }))
 
     this.configuration.websocketProvider.on('close', this.onClose.bind(this))
     this.configuration.websocketProvider.on('close', this.configuration.onClose)
@@ -187,7 +189,6 @@ export class HocuspocusProvider extends EventEmitter {
     }
 
     this.startSync()
-
   }
 
   private onStatus({ status } : {status: WebSocketStatus}) {
@@ -316,7 +317,6 @@ export class HocuspocusProvider extends EventEmitter {
   }
 
   onMessage(event: MessageEvent) {
-
     const message = new IncomingMessage(event.data)
 
     const documentName = message.readVarString()
@@ -327,7 +327,7 @@ export class HocuspocusProvider extends EventEmitter {
 
     message.writeVarString(documentName)
 
-    this.emit('message', { event, message })
+    this.emit('message', { event, message: new IncomingMessage(event.data) })
 
     new MessageReceiver(message).apply(this)
   }
@@ -376,6 +376,7 @@ export class HocuspocusProvider extends EventEmitter {
     this.isAuthenticated = true
 
     this.emit('authenticated')
+    this.startSync()
   }
 
   get broadcastChannel() {
@@ -389,7 +390,6 @@ export class HocuspocusProvider extends EventEmitter {
       const message = new IncomingMessage(data)
 
       const documentName = message.readVarString()
-      console.log(`got msg for ${documentName}`)
 
       message.writeVarString(documentName)
 

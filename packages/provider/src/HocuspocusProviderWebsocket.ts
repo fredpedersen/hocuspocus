@@ -8,7 +8,7 @@ import {
 } from '@hocuspocus/common'
 import EventEmitter from './EventEmitter'
 import {
-  onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, WebSocketStatus,
+  onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, WebSocketStatus,
 } from './types'
 import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
 
@@ -27,10 +27,6 @@ export interface CompleteHocuspocusProviderWebsocketConfiguration {
    */
   connect: boolean,
 
-  /**
-   * A token that’s sent to the backend for authentication purposes.
-   */
-  token: string | (() => string) | (() => Promise<string>) | null,
   /**
    * URL parameters that should be added.
    */
@@ -76,8 +72,6 @@ export interface CompleteHocuspocusProviderWebsocketConfiguration {
    * A timeout in milliseconds. If timeout is non-zero then a timer is set using setTimeout. If the timeout is triggered then future attempts will be aborted.
    */
   timeout: number,
-  onAuthenticated: () => void,
-  onAuthenticationFailed: (data: onAuthenticationFailedParameters) => void,
   onOpen: (data: onOpenParameters) => void,
   onConnect: () => void,
   onMessage: (data: onMessageParameters) => void,
@@ -102,7 +96,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     // @ts-ignore
     awareness: undefined,
     WebSocketPolyfill: undefined,
-    token: null,
     parameters: {},
     connect: true,
     broadcast: true,
@@ -125,8 +118,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     jitter: true,
     // retry forever
     timeout: 0,
-    onAuthenticated: () => null,
-    onAuthenticationFailed: () => null,
     onOpen: () => null,
     onConnect: () => null,
     onMessage: () => null,
@@ -147,8 +138,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
   shouldConnect = true
 
   status = WebSocketStatus.Disconnected
-
-  isAuthenticated = false
 
   lastMessageReceived = 0
 
@@ -171,8 +160,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     this.configuration.WebSocketPolyfill = configuration.WebSocketPolyfill ? configuration.WebSocketPolyfill : WebSocket
 
     this.on('open', this.configuration.onOpen)
-    this.on('authenticated', this.configuration.onAuthenticated)
-    this.on('authenticationFailed', this.configuration.onAuthenticationFailed)
     this.on('connect', this.configuration.onConnect)
     this.on('message', this.configuration.onMessage)
     this.on('outgoingMessage', this.configuration.onOutgoingMessage)
@@ -362,10 +349,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     return `${this.serverUrl}${encodedParams.length === 0 ? '' : `?${encodedParams}`}`
   }
 
-  get isAuthenticationRequired(): boolean {
-    return !!this.configuration.token && !this.isAuthenticated
-  }
-
   disconnect() {
     this.shouldConnect = false
 
@@ -380,15 +363,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
     }
   }
 
-  async getToken() {
-    if (typeof this.configuration.token === 'function') {
-      const token = await this.configuration.token()
-      return token
-    }
-
-    return this.configuration.token
-  }
-
   send(message: any) {
     if (this.webSocket?.readyState === WsReadyStates.Open) {
       this.webSocket.send(message)
@@ -397,7 +371,6 @@ export class HocuspocusProviderWebsocket extends EventEmitter {
 
   onClose({ event }: onCloseParameters) {
     this.webSocket = null
-    this.isAuthenticated = false
 
     if (this.status === WebSocketStatus.Connected) {
       this.status = WebSocketStatus.Disconnected
