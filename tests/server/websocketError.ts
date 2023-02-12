@@ -13,9 +13,9 @@ test('does not crash when invalid opcode is sent', async t => {
       onSynced({ state }) {
         // Send a bad opcode via the low level internal _socket
         // Inspired by https://github.com/websockets/ws/blob/975382178f8a9355a5a564bb29cb1566889da9ba/test/websocket.test.js#L553-L589
-        // @ts-ignore
 
         if (state) {
+        // @ts-ignore
           socket.webSocket!._socket.write(Buffer.from([0x00, 0x00])) // eslint-disable-line
         }
       },
