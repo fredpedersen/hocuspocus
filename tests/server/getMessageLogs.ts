@@ -1,5 +1,5 @@
 import test from 'ava'
-import { newHocuspocus, newHocuspocusProvider, sleep } from '../utils'
+import { newHocuspocus, newHocuspocusProvider } from '../utils'
 
 test('outputs the message log', async t => {
   await new Promise(async resolve => {

@@ -1,6 +1,6 @@
 import test from 'ava'
 import {
-  newHocuspocus, newHocuspocusProvider, randomInteger, sleep,
+  newHocuspocus, newHocuspocusProvider, randomInteger,
 } from '../utils'
 import { retryableAssertion } from '../utils/retryableAssertion'
 

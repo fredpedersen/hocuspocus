@@ -1,6 +1,5 @@
 import test from 'ava'
 import { onStoreDocumentPayload } from '@hocuspocus/server'
-import { HocuspocusProvider } from '@hocuspocus/provider'
 import {
   newHocuspocus, newHocuspocusProvider, newHocuspocusProviderWebsocket, sleep,
 } from '../utils'

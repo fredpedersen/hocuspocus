@@ -1,7 +1,6 @@
 import test from 'ava'
-import { WebSocketStatus } from '@hocuspocus/provider'
-import { newHocuspocus, newHocuspocusProvider, sleep } from '../utils'
 import { retryableAssertion } from '../utils/retryableAssertion'
+import { newHocuspocus, newHocuspocusProvider } from '../utils'
 
 test('returns 0 connections when there’s no one connected', async t => {
   await new Promise(async resolve => {
