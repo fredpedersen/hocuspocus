@@ -1,6 +1,6 @@
+import { IncomingMessage as HTTPIncomingMessage } from 'http'
 import AsyncLock from 'async-lock'
 import WebSocket from 'ws'
-import { IncomingMessage as HTTPIncomingMessage } from 'http'
 import {
   CloseEvent, ConnectionTimeout, Forbidden, WsReadyStates,
 } from '@hocuspocus/common'
@@ -9,7 +9,6 @@ import { IncomingMessage } from './IncomingMessage'
 import { OutgoingMessage } from './OutgoingMessage'
 import { MessageReceiver } from './MessageReceiver'
 import { Debugger } from './Debugger'
-import { beforeHandleMessagePayload } from './types'
 
 export class Connection {
 

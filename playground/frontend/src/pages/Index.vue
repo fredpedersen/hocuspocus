@@ -48,7 +48,6 @@ import StarterKit from '@tiptap/starter-kit'
 import Collaboration from '@tiptap/extension-collaboration'
 import {
   HocuspocusProvider,
-  HocuspocusCloudProvider,
   HocuspocusProviderWebsocket,
 } from '@hocuspocus/provider'
 

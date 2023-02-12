@@ -6,8 +6,7 @@ import {
   readSyncStep2,
   readUpdate,
 } from 'y-protocols/sync'
-import { applyAwarenessUpdate, Awareness } from 'y-protocols/awareness'
-import { doc } from 'lib0/dom'
+import { applyAwarenessUpdate } from 'y-protocols/awareness'
 import { MessageType } from './types'
 import Connection from './Connection'
 import { IncomingMessage } from './IncomingMessage'
