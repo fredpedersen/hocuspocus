@@ -242,3 +242,31 @@ test('connects with the correct token', async t => {
     })
   })
 })
+
+test('onAuthenticate has access to document name', async t => {
+  const docName = 'superSecretDoc'
+  const requiredToken = 'SUPER-SECRET-TOKEN'
+
+  await new Promise(async resolve => {
+    const server = await newHocuspocus({
+      async onAuthenticate({ token, documentName }: onAuthenticatePayload) {
+        if (documentName !== docName) {
+          throw new Error()
+        }
+
+        if (token !== requiredToken) {
+          throw new Error()
+        }
+      },
+    })
+
+    newHocuspocusProvider(server, {
+      token: requiredToken,
+      name: docName,
+      onAuthenticated() {
+        t.pass()
+        resolve('done')
+      },
+    })
+  })
+})

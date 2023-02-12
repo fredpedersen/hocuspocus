@@ -441,7 +441,7 @@ export class Hocuspocus {
             category: 'Token',
           })
 
-          this.hooks('onAuthenticate', { token, ...hookPayload }, (contextAdditions: any) => {
+          this.hooks('onAuthenticate', { token, ...hookPayload, documentName }, (contextAdditions: any) => {
             // Hooks are allowed to give us even more context and we’ll merge everything together.
             // We’ll pass the context to other hooks then.
             context = { ...context, ...contextAdditions }
