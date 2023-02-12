@@ -10,16 +10,18 @@ test('does not crash when invalid opcode is sent', async t => {
 
     const provider = newHocuspocusProvider(server, {
       websocketProvider: socket,
-      onSynced() {
+      onSynced({ state }) {
         // Send a bad opcode via the low level internal _socket
         // Inspired by https://github.com/websockets/ws/blob/975382178f8a9355a5a564bb29cb1566889da9ba/test/websocket.test.js#L553-L589
         // @ts-ignore
 
-        socket.webSocket!._socket.write(Buffer.from([0x00, 0x00])) // eslint-disable-line
+        if (state) {
+          socket.webSocket!._socket.write(Buffer.from([0x00, 0x00])) // eslint-disable-line
+        }
       },
       onClose({ event }) {
         t.is(event.code, 1002)
-        provider.destroy()
+        socket.destroy()
       },
       onDestroy() {
         t.pass()

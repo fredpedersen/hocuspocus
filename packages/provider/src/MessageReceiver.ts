@@ -77,7 +77,7 @@ export class MessageReceiver {
     )
 
     // Synced once we receive Step2
-    if (emitSynced && (syncMessageType === messageYjsSyncStep2)) {
+    if (emitSynced && syncMessageType === messageYjsSyncStep2) {
       provider.synced = true
     }
 

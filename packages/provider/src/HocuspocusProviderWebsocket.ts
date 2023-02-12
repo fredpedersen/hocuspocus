@@ -1,14 +1,14 @@
 import * as time from 'lib0/time'
 import * as mutex from 'lib0/mutex'
 import * as url from 'lib0/url'
-import type { CloseEvent, MessageEvent } from 'ws'
+import type { MessageEvent } from 'ws'
 import { retry } from '@lifeomic/attempt'
 import {
   Forbidden, Unauthorized, WsReadyStates,
 } from '@hocuspocus/common'
 import EventEmitter from './EventEmitter'
 import {
-  onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, onSyncedParameters, WebSocketStatus,
+  onAuthenticationFailedParameters, onCloseParameters, onDisconnectParameters, onMessageParameters, onOpenParameters, onOutgoingMessageParameters, onStatusParameters, WebSocketStatus,
 } from './types'
 import { onAwarenessChangeParameters, onAwarenessUpdateParameters } from '.'
 

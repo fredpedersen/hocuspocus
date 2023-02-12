@@ -164,6 +164,9 @@ export class HocuspocusProvider extends EventEmitter {
     this.configuration.websocketProvider.on('disconnect', this.configuration.onDisconnect)
     this.configuration.websocketProvider.on('disconnect', (e: Event) => this.emit('disconnect', { event: e }))
 
+    this.configuration.websocketProvider.on('destroy', this.configuration.onDestroy)
+    this.configuration.websocketProvider.on('destroy', (e: Event) => this.emit('destroy', { event: e }))
+
     this.awareness.on('update', () => {
       this.emit('awarenessUpdate', { states: awarenessStatesToArray(this.awareness.getStates()) })
     })

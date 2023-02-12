@@ -231,6 +231,11 @@ export class Redis implements Extension {
    * in Redis to filter these.
   */
   private handleIncomingMessage = async (channel: Buffer, pattern: Buffer, data: Buffer) => {
+    const message = new IncomingMessage(data)
+    // we don't need the documentName from the message, we are just taking it from the redis channelName.
+    // we have to immediately write it back to the encoder though, to make sure the structure of the message is correct
+    message.writeVarString(message.readVarString())
+
     const channelName = pattern.toString()
     const [_, documentName, identifier] = channelName.split(':')
     const document = this.documents.get(documentName)
@@ -244,7 +249,7 @@ export class Redis implements Extension {
     }
 
     new MessageReceiver(
-      new IncomingMessage(data),
+      message,
       this.logger,
     ).apply(document, undefined, reply => {
       return this.pub.publishBuffer(
