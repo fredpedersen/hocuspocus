@@ -477,12 +477,16 @@ export class Hocuspocus {
               // Ensure that the permission denied message is sent before the
               // connection is closed
               incoming.send(message.toUint8Array(), () => {
-                try {
-                  incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)
-                } catch (closeError) {
-                  // catch is needed in case invalid error code is returned by hook (that would fail sending the close message)
-                  console.error(closeError)
-                  incoming.close(Forbidden.code, Forbidden.reason)
+                if (Object.keys(documentConnections).length === 0) {
+                  try {
+                    incoming.close(error.code ?? Forbidden.code, error.reason ?? Forbidden.reason)
+                  } catch (closeError) {
+                    // catch is needed in case invalid error code is returned by hook (that would fail sending the close message)
+                    console.error(closeError)
+                    incoming.close(Forbidden.code, Forbidden.reason)
+                  }
+                } else {
+
                 }
               })
             })
@@ -518,7 +522,7 @@ export class Hocuspocus {
           })
             .then(() => {
               // Authentication is required, we’ll need to wait for the Authentication message.
-              if (connection.requiresAuthentication && !connection.isAuthenticated) {
+              if (connection.requiresAuthentication) {
                 return
               }
 

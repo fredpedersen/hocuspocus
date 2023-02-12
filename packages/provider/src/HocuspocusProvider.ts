@@ -370,6 +370,8 @@ export class HocuspocusProvider extends EventEmitter {
   permissionDeniedHandler(reason: string) {
     this.emit('authenticationFailed', { reason })
     this.isAuthenticated = false
+    this.disconnect()
+    this.status = WebSocketStatus.Disconnected
   }
 
   authenticatedHandler() {
